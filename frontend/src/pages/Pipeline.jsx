@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { dealsAPI, contactsAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiDollarSign, FiMove } from 'react-icons/fi';
 import { format } from 'date-fns';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const Pipeline = () => {
   const [pipeline, setPipeline] = useState({
@@ -91,6 +92,53 @@ const Pipeline = () => {
     }
   };
 
+  const handleDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+
+    // If dropped outside a droppable area
+    if (!destination) {
+      return;
+    }
+
+    // If dropped in the same position
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const sourceStage = source.droppableId;
+    const destinationStage = destination.droppableId;
+    const dealId = parseInt(draggableId);
+
+    // Create a copy of the pipeline state for optimistic update
+    const newPipeline = { ...pipeline };
+    
+    // Remove deal from source stage
+    const sourceDeal = newPipeline[sourceStage].find(deal => deal.id === dealId);
+    newPipeline[sourceStage] = newPipeline[sourceStage].filter(deal => deal.id !== dealId);
+    
+    // Add deal to destination stage
+    if (sourceDeal) {
+      sourceDeal.stage = destinationStage;
+      newPipeline[destinationStage].splice(destination.index, 0, sourceDeal);
+    }
+
+    // Optimistically update the UI
+    setPipeline(newPipeline);
+
+    try {
+      // Update the backend
+      await dealsAPI.updateStage(dealId, destinationStage);
+      toast.success(`Deal moved to ${stageConfig.find(s => s.key === destinationStage)?.label}!`);
+    } catch (error) {
+      // Revert the optimistic update on error
+      loadPipeline();
+      toast.error('Failed to move deal');
+    }
+  };
+
   const calculateStageValue = (stage) => {
     return stage.reduce((sum, deal) => sum + parseFloat(deal.value || 0), 0);
   };
@@ -115,6 +163,10 @@ const Pipeline = () => {
           <div>
             <h1>Deal Pipeline</h1>
             <p className="subtitle">Total Pipeline Value: ${totalValue.toLocaleString()}</p>
+            <p className="drag-hint">
+              <FiMove style={{ marginRight: '6px' }} />
+              Drag deals between columns to change stages
+            </p>
           </div>
           <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
             <FiPlus /> Add Deal
@@ -127,94 +179,123 @@ const Pipeline = () => {
             <p>Loading pipeline...</p>
           </div>
         ) : (
-          <div className="pipeline-board">
-            {stageConfig.map(stage => (
-              <div key={stage.key} className="pipeline-column">
-                <div className={`column-header ${stage.color}`}>
-                  <h3>{stage.label}</h3>
-                  <div className="column-stats">
-                    <span className="badge">{pipeline[stage.key]?.length || 0}</span>
-                    <span className="value">
-                      ${calculateStageValue(pipeline[stage.key] || []).toLocaleString()}
-                    </span>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="pipeline-board">
+              {stageConfig.map(stage => (
+                <div key={stage.key} className="pipeline-column">
+                  <div className={`column-header ${stage.color}`}>
+                    <h3>{stage.label}</h3>
+                    <div className="column-stats">
+                      <span className="badge">{pipeline[stage.key]?.length || 0}</span>
+                      <span className="value">
+                        ${calculateStageValue(pipeline[stage.key] || []).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="deal-list">
-                  {pipeline[stage.key] && pipeline[stage.key].length > 0 ? (
-                    pipeline[stage.key].map(deal => (
-                      <div key={deal.id} className="deal-card">
-                        <h4>{deal.title}</h4>
-                        <p className="deal-contact">
-                          {deal.contact_name} {deal.contact_company && `• ${deal.contact_company}`}
-                        </p>
-                        <div className="deal-value">
-                          <FiDollarSign />
-                          {parseFloat(deal.value || 0).toLocaleString()}
-                        </div>
-                        {deal.expected_close_date && (
-                          <p className="deal-date">
-                            Close: {format(new Date(deal.expected_close_date), 'MMM d, yyyy')}
-                          </p>
-                        )}
-                        {deal.probability !== null && (
-                          <div className="deal-probability">
-                            <div className="probability-bar">
-                              <div 
-                                className="probability-fill" 
-                                style={{ width: `${deal.probability}%` }}
-                              ></div>
-                            </div>
-                            <span>{deal.probability}%</span>
-                          </div>
-                        )}
-                        {deal.assigned_to_name && (
-                          <p className="deal-assignee">
-                            <span className="avatar-xs">
-                              {deal.assigned_to_name.charAt(0).toUpperCase()}
-                            </span>
-                            {deal.assigned_to_name}
-                          </p>
-                        )}
+                  <Droppable droppableId={stage.key}>
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className={`deal-list ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                      >
+                        {pipeline[stage.key] && pipeline[stage.key].length > 0 ? (
+                          pipeline[stage.key].map((deal, index) => (
+                            <Draggable
+                              key={deal.id}
+                              draggableId={deal.id.toString()}
+                              index={index}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`deal-card ${snapshot.isDragging ? 'dragging' : ''}`}
+                                >
+                                  <div {...provided.dragHandleProps} className="drag-handle">
+                                    <FiMove />
+                                  </div>
+                                  
+                                  <h4>{deal.title}</h4>
+                                  <p className="deal-contact">
+                                    {deal.contact_name} {deal.contact_company && `• ${deal.contact_company}`}
+                                  </p>
+                                  <div className="deal-value">
+                                    <FiDollarSign />
+                                    {parseFloat(deal.value || 0).toLocaleString()}
+                                  </div>
+                                  {deal.expected_close_date && (
+                                    <p className="deal-date">
+                                      Close: {format(new Date(deal.expected_close_date), 'MMM d, yyyy')}
+                                    </p>
+                                  )}
+                                  {deal.probability !== null && (
+                                    <div className="deal-probability">
+                                      <div className="probability-bar">
+                                        <div 
+                                          className="probability-fill" 
+                                          style={{ width: `${deal.probability}%` }}
+                                        ></div>
+                                      </div>
+                                      <span>{deal.probability}%</span>
+                                    </div>
+                                  )}
+                                  {deal.assigned_to_name && (
+                                    <p className="deal-assignee">
+                                      <span className="avatar-xs">
+                                        {deal.assigned_to_name.charAt(0).toUpperCase()}
+                                      </span>
+                                      {deal.assigned_to_name}
+                                    </p>
+                                  )}
 
-                        {/* Stage Navigation */}
-                        <div className="deal-actions">
-                          {stage.key !== 'lead' && stage.key !== 'closed_lost' && (
-                            <button
-                              onClick={() => {
-                                const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
-                                if (currentIndex > 0) {
-                                  handleStageChange(deal.id, stageConfig[currentIndex - 1].key);
-                                }
-                              }}
-                              className="btn btn-sm"
-                            >
-                              ←
-                            </button>
-                          )}
-                          {stage.key !== 'closed_won' && stage.key !== 'closed_lost' && (
-                            <button
-                              onClick={() => {
-                                const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
-                                if (currentIndex < stageConfig.length - 2) {
-                                  handleStageChange(deal.id, stageConfig[currentIndex + 1].key);
-                                }
-                              }}
-                              className="btn btn-sm"
-                            >
-                              →
-                            </button>
-                          )}
-                        </div>
+                                  {/* Stage Navigation - Keep as backup */}
+                                  <div className="deal-actions">
+                                    {stage.key !== 'lead' && stage.key !== 'closed_lost' && (
+                                      <button
+                                        onClick={() => {
+                                          const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
+                                          if (currentIndex > 0) {
+                                            handleStageChange(deal.id, stageConfig[currentIndex - 1].key);
+                                          }
+                                        }}
+                                        className="btn btn-sm"
+                                        title="Move to previous stage"
+                                      >
+                                        ←
+                                      </button>
+                                    )}
+                                    {stage.key !== 'closed_won' && stage.key !== 'closed_lost' && (
+                                      <button
+                                        onClick={() => {
+                                          const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
+                                          if (currentIndex < stageConfig.length - 2) {
+                                            handleStageChange(deal.id, stageConfig[currentIndex + 1].key);
+                                          }
+                                        }}
+                                        className="btn btn-sm"
+                                        title="Move to next stage"
+                                      >
+                                        →
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          <p className="empty-state">No deals</p>
+                        )}
+                        {provided.placeholder}
                       </div>
-                    ))
-                  ) : (
-                    <p className="empty-state">No deals</p>
-                  )}
+                    )}
+                  </Droppable>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </DragDropContext>
         )}
 
         {/* Add Deal Modal */}
