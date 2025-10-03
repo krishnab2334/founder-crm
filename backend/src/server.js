@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -18,21 +19,36 @@ const aiRoutes = require('./routes/ai');
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
+// ------------------- CORS ------------------- //
+// Allow multiple origins: localhost + deployed frontend
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://founder-crm-eight.vercel.app' // Add your deployed frontend URL
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback){
+    if(!origin) return callback(null, true); // allow non-browser requests (like Postman)
+    if(allowedOrigins.includes(origin)){
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
   credentials: true
 }));
+
+// ------------------- Middleware ------------------- //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
+// Request logging
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Health check route
+// ------------------- Health Check ------------------- //
 app.get('/health', (req, res) => {
   res.json({ 
     success: true, 
@@ -41,7 +57,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
+// ------------------- API Routes ------------------- //
 app.use('/api/auth', authRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/tasks', taskRoutes);
@@ -49,7 +65,7 @@ app.use('/api/deals', dealRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai', aiRoutes);
 
-// 404 handler
+// ------------------- 404 Handler ------------------- //
 app.use((req, res) => {
   res.status(404).json({ 
     success: false, 
@@ -57,9 +73,9 @@ app.use((req, res) => {
   });
 });
 
-// Error handling middleware
+// ------------------- Error Handling ------------------- //
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('Error:', err.message || err);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -67,25 +83,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize WebSocket
+// ------------------- WebSocket ------------------- //
 initializeWebSocket(server);
 
-// Start server
+// ------------------- Start Server ------------------- //
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    // Test database connection
-    await testConnection();
-    
-    // Start listening
+    await testConnection(); // Test database connection
+
     server.listen(PORT, () => {
       console.log('=================================');
       console.log('🚀 Founder CRM API Server');
       console.log('=================================');
       console.log(`📡 Server running on port ${PORT}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 API URL: http://localhost:${PORT}`);
       console.log(`🔌 WebSocket ready`);
       console.log('=================================');
     });
