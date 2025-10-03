@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { contactsAPI, tasksAPI, aiAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiMail, FiPhone, FiBuilding, FiEdit, FiPlus, FiMessageSquare } from 'react-icons/fi';
+import { FiMail, FiPhone, FiEdit, FiPlus, FiMessageSquare } from "react-icons/fi";
+import { FaBuilding } from "react-icons/fa";   // <-- Font Awesome building
+
 import { format } from 'date-fns';
 
 const ContactDetail = () => {
@@ -178,7 +180,7 @@ const ContactDetail = () => {
                 )}
                 {contact.company && (
                   <div className="detail-item">
-                    <FiBuilding /> {contact.company}
+                    <FaBuilding /> {contact.company}
                   </div>
                 )}
               </div>

@@ -1,26 +1,34 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await login(email, password);
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      const result = await login({ email, password });
+      if (result.success) {
+        toast.success('Login successful!');
+        // Navigation will happen automatically via useEffect when user state updates
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
-    } finally {
+      toast.error(error.message || 'Login failed');
       setLoading(false);
     }
   };
@@ -42,6 +50,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="your@email.com"
+              disabled={loading}
             />
           </div>
 
@@ -53,6 +62,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Enter your password"
+              disabled={loading}
             />
           </div>
 

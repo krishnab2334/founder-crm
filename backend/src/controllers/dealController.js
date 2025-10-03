@@ -66,11 +66,10 @@ const getDealsByPipeline = async (req, res) => {
     // Group by stage
     const pipeline = {
       lead: [],
-      qualified: [],
-      demo: [],
+      contact: [],
       proposal: [],
-      closed_won: [],
-      closed_lost: []
+      negotiation: [],
+      closed: []
     };
 
     deals.forEach(deal => {
