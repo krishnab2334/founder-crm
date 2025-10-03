@@ -3,15 +3,16 @@ import Layout from '../components/Layout';
 import { dashboardAPI, tasksAPI, aiAPI } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
+import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiUsers, FiTarget, FiCopy } from 'react-icons/fi';
 import { format } from 'date-fns';
 
 const FounderDashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, workspace } = useContext(AuthContext);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [showWorkspaceInfo, setShowWorkspaceInfo] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -58,6 +59,13 @@ const FounderDashboard = () => {
     }
   };
 
+  const copyWorkspaceCode = () => {
+    if (workspace?.workspace_code) {
+      navigator.clipboard.writeText(workspace.workspace_code);
+      toast.success('Workspace code copied to clipboard!');
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -95,6 +103,9 @@ const FounderDashboard = () => {
             <p className="subtitle">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
           </div>
           <div className="header-actions">
+            <button onClick={() => setShowWorkspaceInfo(true)} className="btn btn-secondary">
+              <FiUsers /> Workspace Info
+            </button>
             <button onClick={handleAIPrioritize} className="btn btn-secondary">
               🤖 AI Prioritize Tasks
             </button>
@@ -143,6 +154,26 @@ const FounderDashboard = () => {
             <div className="stat-content">
               <h3>${totalDealValue.toLocaleString()}</h3>
               <p>Pipeline Value</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon purple">
+              <FiUsers />
+            </div>
+            <div className="stat-content">
+              <h3>{teamActivity.length}</h3>
+              <p>Team Members</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon teal">
+              <FiTarget />
+            </div>
+            <div className="stat-content">
+              <h3>{totalDeals}</h3>
+              <p>Active Deals</p>
             </div>
           </div>
         </div>
@@ -313,6 +344,85 @@ const FounderDashboard = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Info Modal */}
+        {showWorkspaceInfo && (
+          <div className="modal-overlay" onClick={() => setShowWorkspaceInfo(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Workspace Information</h2>
+                <button onClick={() => setShowWorkspaceInfo(false)} className="close-btn">×</button>
+              </div>
+              
+              <div className="workspace-info">
+                <div className="info-section">
+                  <h3>Workspace Details</h3>
+                  <div className="info-item">
+                    <label>Workspace Name:</label>
+                    <span>{workspace?.name}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Your Role:</label>
+                    <span className="role-badge founder">Founder</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Team Members:</label>
+                    <span>{teamActivity.length} members</span>
+                  </div>
+                </div>
+
+                <div className="info-section">
+                  <h3>Team Member Registration</h3>
+                  <p>Share this workspace code with team members so they can join:</p>
+                  <div className="workspace-code-container">
+                    <div className="workspace-code">
+                      {workspace?.workspace_code || 'Loading...'}
+                    </div>
+                    <button onClick={copyWorkspaceCode} className="btn btn-secondary">
+                      <FiCopy /> Copy Code
+                    </button>
+                  </div>
+                  <p className="help-text">
+                    Team members can use this code at: <strong>/register-team-member</strong>
+                  </p>
+                </div>
+
+                <div className="info-section">
+                  <h3>Quick Actions</h3>
+                  <div className="quick-actions">
+                    <button 
+                      onClick={() => {
+                        setShowWorkspaceInfo(false);
+                        window.location.href = '/team';
+                      }} 
+                      className="btn btn-primary"
+                    >
+                      <FiUsers /> Manage Team
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowWorkspaceInfo(false);
+                        window.location.href = '/contacts';
+                      }} 
+                      className="btn btn-secondary"
+                    >
+                      View Contacts
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowWorkspaceInfo(false);
+                        window.location.href = '/pipeline';
+                      }} 
+                      className="btn btn-secondary"
+                    >
+                      View Pipeline
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

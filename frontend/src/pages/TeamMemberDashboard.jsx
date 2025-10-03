@@ -3,15 +3,16 @@ import Layout from '../components/Layout';
 import { dashboardAPI, tasksAPI } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTarget, FiTrendingUp, FiUser } from 'react-icons/fi';
 import { format } from 'date-fns';
 
 const TeamMemberDashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, workspace } = useContext(AuthContext);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [showMyProfile, setShowMyProfile] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -94,8 +95,14 @@ const TeamMemberDashboard = () => {
           <div>
             <h1>Welcome back, {user?.name}! 👋</h1>
             <p className="subtitle">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+            <p className="workspace-info">
+              <strong>{workspace?.name}</strong> • Team Member
+            </p>
           </div>
           <div className="header-actions">
+            <button onClick={() => setShowMyProfile(true)} className="btn btn-secondary">
+              <FiUser /> My Profile
+            </button>
             <button onClick={() => setShowQuickAdd(true)} className="btn btn-primary">
               <FiPlus /> Quick Add Task
             </button>
@@ -136,11 +143,38 @@ const TeamMemberDashboard = () => {
 
           <div className="stat-card">
             <div className="stat-icon green">
-              <FiCheckCircle />
+              <FiTarget />
             </div>
             <div className="stat-content">
               <h3>{myDeals.length}</h3>
               <p>My Deals</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon purple">
+              <FiTrendingUp />
+            </div>
+            <div className="stat-content">
+              <h3>
+                {myDeals.reduce((sum, deal) => sum + parseFloat(deal.value || 0), 0).toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                })}
+              </h3>
+              <p>My Pipeline Value</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon teal">
+              <FiCheckCircle />
+            </div>
+            <div className="stat-content">
+              <h3>{Math.round((completedTasks / Math.max(totalTasks, 1)) * 100)}%</h3>
+              <p>Completion Rate</p>
             </div>
           </div>
         </div>
@@ -308,6 +342,105 @@ const TeamMemberDashboard = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* My Profile Modal */}
+        {showMyProfile && (
+          <div className="modal-overlay" onClick={() => setShowMyProfile(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>My Profile</h2>
+                <button onClick={() => setShowMyProfile(false)} className="close-btn">×</button>
+              </div>
+              
+              <div className="profile-info">
+                <div className="profile-avatar">
+                  <div className="avatar-circle">
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </div>
+                </div>
+
+                <div className="info-section">
+                  <h3>Personal Information</h3>
+                  <div className="info-item">
+                    <label>Name:</label>
+                    <span>{user?.name}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Email:</label>
+                    <span>{user?.email}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Role:</label>
+                    <span className="role-badge team-member">Team Member</span>
+                  </div>
+                </div>
+
+                <div className="info-section">
+                  <h3>Workspace</h3>
+                  <div className="info-item">
+                    <label>Workspace:</label>
+                    <span>{workspace?.name}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Member Since:</label>
+                    <span>{user?.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="info-section">
+                  <h3>My Performance</h3>
+                  <div className="performance-stats">
+                    <div className="perf-stat">
+                      <span className="perf-number">{completedTasks}</span>
+                      <span className="perf-label">Tasks Completed</span>
+                    </div>
+                    <div className="perf-stat">
+                      <span className="perf-number">{myDeals.length}</span>
+                      <span className="perf-label">Active Deals</span>
+                    </div>
+                    <div className="perf-stat">
+                      <span className="perf-number">{recentInteractions.length}</span>
+                      <span className="perf-label">Recent Interactions</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="info-section">
+                  <h3>Quick Actions</h3>
+                  <div className="quick-actions">
+                    <button 
+                      onClick={() => {
+                        setShowMyProfile(false);
+                        window.location.href = '/tasks';
+                      }} 
+                      className="btn btn-primary"
+                    >
+                      View All Tasks
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowMyProfile(false);
+                        window.location.href = '/contacts';
+                      }} 
+                      className="btn btn-secondary"
+                    >
+                      View Contacts
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowMyProfile(false);
+                        window.location.href = '/pipeline';
+                      }} 
+                      className="btn btn-secondary"
+                    >
+                      View Pipeline
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
