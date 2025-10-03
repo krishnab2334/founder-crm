@@ -1,6 +1,37 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api';
+// Use environment variable for API URL, fallback to relative path for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+// Configure axios defaults
+axios.defaults.baseURL = API_BASE_URL.replace('/api', '');
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// Add auth token to requests
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle token expiration
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Contacts API
 export const contactsAPI = {
