@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://founder-crm-1.onrender.com/api';
 
 // Create axios instance with default config
 const api = axios.create({
