@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Layout from '../components/Layout';
 import { authAPI } from '../services/api';
+import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiUserPlus, FiMail, FiCopy } from 'react-icons/fi';
+import { FiUserPlus, FiMail, FiCopy, FiKey } from 'react-icons/fi';
 
 const TeamManagement = () => {
+  const { user } = useContext(AuthContext);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -32,9 +34,9 @@ const TeamManagement = () => {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(invitationLink);
-    toast.success('Link copied to clipboard!');
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
   };
 
   return (
@@ -45,6 +47,24 @@ const TeamManagement = () => {
           <button onClick={() => setShowInviteModal(true)} className="btn btn-primary">
             <FiUserPlus /> Invite Team Member
           </button>
+        </div>
+
+        <div className="team-info-card">
+          <h3><FiKey /> Workspace Code</h3>
+          <p>
+            Share this code with team members so they can directly register and join your workspace:
+          </p>
+          <div className="workspace-code-container">
+            <div className="workspace-code">
+              <strong>Workspace ID:</strong> {user?.workspace_id}
+            </div>
+            <button onClick={() => copyToClipboard(user?.workspace_id?.toString())} className="btn btn-secondary">
+              <FiCopy /> Copy Code
+            </button>
+          </div>
+          <p className="note">
+            Team members can use this code at <a href="/register-team-member" target="_blank">/register-team-member</a> to join directly
+          </p>
         </div>
 
         <div className="team-info-card">
@@ -76,7 +96,7 @@ const TeamManagement = () => {
                 readOnly 
                 onClick={(e) => e.target.select()}
               />
-              <button onClick={copyToClipboard} className="btn btn-secondary">
+              <button onClick={() => copyToClipboard(invitationLink)} className="btn btn-secondary">
                 <FiCopy /> Copy
               </button>
             </div>

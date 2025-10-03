@@ -6,11 +6,13 @@ const {
   login,
   getMe,
   inviteTeamMember,
-  acceptInvitation
+  acceptInvitation,
+  registerTeamMember
 } = require('../controllers/authController');
 
 // Public routes
 router.post('/register', register);
+router.post('/register-team-member', registerTeamMember);
 router.post('/login', login);
 router.post('/accept-invitation', acceptInvitation);
 

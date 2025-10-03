@@ -93,10 +93,16 @@ const FounderDashboard = () => {
           <div>
             <h1>Welcome back, {user?.name}! 👋</h1>
             <p className="subtitle">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+            <p className="subtitle" style={{ fontSize: '14px', marginTop: '4px' }}>
+              Founder Dashboard - Manage your team, pipeline, and overview
+            </p>
           </div>
           <div className="header-actions">
             <button onClick={handleAIPrioritize} className="btn btn-secondary">
               🤖 AI Prioritize Tasks
+            </button>
+            <button onClick={() => window.location.href = '/team'} className="btn btn-secondary">
+              👥 Manage Team
             </button>
             <button onClick={() => setShowQuickAdd(true)} className="btn btn-primary">
               <FiPlus /> Quick Add Task

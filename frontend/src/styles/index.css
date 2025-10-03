@@ -250,6 +250,53 @@ body {
   font-weight: 600;
 }
 
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.auth-link {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.auth-link.primary {
+  background: var(--primary);
+  color: white;
+}
+
+.auth-link.primary:hover {
+  background: var(--primary-dark);
+}
+
+.auth-link.secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.auth-link.secondary:hover {
+  background: var(--border-color);
+}
+
+.separator {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.form-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
 /* ============================================
    Common Components
    ============================================ */
@@ -993,4 +1040,92 @@ body {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================
+   Team Management Styles
+   ============================================ */
+
+.team-info-card {
+  background: white;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+}
+
+.team-info-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.team-info-card ul {
+  margin-left: 24px;
+  margin-top: 12px;
+}
+
+.team-info-card li {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.workspace-code-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--border-color);
+}
+
+.workspace-code {
+  flex: 1;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.workspace-code strong {
+  color: var(--primary);
+  margin-right: 8px;
+}
+
+.invitation-result {
+  background: white;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+  border-left: 4px solid var(--success);
+}
+
+.invitation-result h3 {
+  color: var(--success);
+  margin-bottom: 12px;
+}
+
+.link-container {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.link-container input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
 }
