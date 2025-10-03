@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { dealsAPI, contactsAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiDollarSign } from 'react-icons/fi';
+// Using simple icons
 import { format } from 'date-fns';
 
 const Pipeline = () => {
@@ -117,7 +117,7 @@ const Pipeline = () => {
             <p className="subtitle">Total Pipeline Value: ${totalValue.toLocaleString()}</p>
           </div>
           <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
-            <FiPlus /> Add Deal
+            <span>➕</span> Add Deal
           </button>
         </div>
 
@@ -149,7 +149,7 @@ const Pipeline = () => {
                           {deal.contact_name} {deal.contact_company && `• ${deal.contact_company}`}
                         </p>
                         <div className="deal-value">
-                          <FiDollarSign />
+                          <span className="icon">💵</span>
                           {parseFloat(deal.value || 0).toLocaleString()}
                         </div>
                         {deal.expected_close_date && (

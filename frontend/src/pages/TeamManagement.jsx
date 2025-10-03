@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { authAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiUserPlus, FiMail, FiCopy } from 'react-icons/fi';
+// Using simple icons
 
 const TeamManagement = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -43,7 +43,7 @@ const TeamManagement = () => {
         <div className="page-header">
           <h1>Team Management</h1>
           <button onClick={() => setShowInviteModal(true)} className="btn btn-primary">
-            <FiUserPlus /> Invite Team Member
+            <span>👥</span> Invite Team Member
           </button>
         </div>
 
@@ -77,7 +77,7 @@ const TeamManagement = () => {
                 onClick={(e) => e.target.select()}
               />
               <button onClick={copyToClipboard} className="btn btn-secondary">
-                <FiCopy /> Copy
+                <span>📋</span> Copy
               </button>
             </div>
             <p className="note">This link will expire in 7 days</p>
@@ -120,7 +120,7 @@ const TeamManagement = () => {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    <FiMail /> Send Invitation
+                    <span>📧</span> Send Invitation
                   </button>
                 </div>
               </form>

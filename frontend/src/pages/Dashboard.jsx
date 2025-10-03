@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { dashboardAPI, tasksAPI, aiAPI } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
+// Using simple icons
 import { format } from 'date-fns';
 
 const Dashboard = () => {
@@ -124,7 +124,7 @@ const Dashboard = () => {
               </button>
             )}
             <button onClick={() => setShowQuickAdd(true)} className="btn btn-primary">
-              <FiPlus /> Quick Add Task
+              <span>➕</span> Quick Add Task
             </button>
           </div>
         </div>
@@ -133,7 +133,7 @@ const Dashboard = () => {
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon blue">
-              <FiCheckCircle />
+              <span style={{fontSize: '24px'}}>✓</span>
             </div>
             <div className="stat-content">
               <h3>{completedTasks}/{totalTasks}</h3>
@@ -143,7 +143,7 @@ const Dashboard = () => {
 
           <div className="stat-card">
             <div className="stat-icon orange">
-              <FiClock />
+              <span style={{fontSize: '24px'}}>🕐</span>
             </div>
             <div className="stat-content">
               <h3>{todayTasks.length}</h3>
@@ -153,7 +153,7 @@ const Dashboard = () => {
 
           <div className="stat-card">
             <div className="stat-icon red">
-              <FiAlertCircle />
+              <span style={{fontSize: '24px'}}>⚠️</span>
             </div>
             <div className="stat-content">
               <h3>{overdueTasks.length}</h3>
@@ -163,7 +163,7 @@ const Dashboard = () => {
 
           <div className="stat-card">
             <div className="stat-icon green">
-              <FiTrendingUp />
+              <span style={{fontSize: '24px'}}>📈</span>
             </div>
             <div className="stat-content">
               <h3>{isFounder ? `$${totalDealValue.toLocaleString()}` : myDeals?.length || 0}</h3>

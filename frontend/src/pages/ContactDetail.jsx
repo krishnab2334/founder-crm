@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { contactsAPI, tasksAPI, aiAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiMail, FiPhone, FiBriefcase, FiEdit, FiPlus, FiMessageSquare } from 'react-icons/fi';
+// Using simple icons
 import { format } from 'date-fns';
 
 const ContactDetail = () => {
@@ -145,10 +145,10 @@ const ContactDetail = () => {
           </button>
           <div className="header-actions">
             <button onClick={() => setShowAddTask(true)} className="btn btn-secondary">
-              <FiPlus /> Add Task
+              <span>➕</span> Add Task
             </button>
             <button onClick={() => setShowAddInteraction(true)} className="btn btn-primary">
-              <FiMessageSquare /> Add Interaction
+              <span>💬</span> Add Interaction
             </button>
           </div>
         </div>
@@ -168,17 +168,17 @@ const ContactDetail = () => {
               <div className="contact-details">
                 {contact.email && (
                   <div className="detail-item">
-                    <FiMail /> {contact.email}
+                    <span className="icon">📧</span> {contact.email}
                   </div>
                 )}
                 {contact.phone && (
                   <div className="detail-item">
-                    <FiPhone /> {contact.phone}
+                    <span className="icon">📱</span> {contact.phone}
                   </div>
                 )}
                 {contact.company && (
                   <div className="detail-item">
-                    <FiBriefcase /> {contact.company}
+                    <span className="icon">💼</span> {contact.company}
                   </div>
                 )}
               </div>

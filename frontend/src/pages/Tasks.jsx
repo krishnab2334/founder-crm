@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { tasksAPI } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiFilter } from 'react-icons/fi';
+// Using simple icons
 import { format } from 'date-fns';
 
 const Tasks = () => {
@@ -123,7 +123,7 @@ const Tasks = () => {
         <div className="page-header">
           <h1>Tasks</h1>
           <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
-            <FiPlus /> Add Task
+            <span>➕</span> Add Task
           </button>
         </div>
 

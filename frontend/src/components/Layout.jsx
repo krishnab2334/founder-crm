@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
-import { FiHome, FiUsers, FiCheckSquare, FiTrello, FiLogOut, FiUserPlus } from 'react-icons/fi';
+// Using simple text icons instead of react-icons
 
 const Layout = ({ children }) => {
   const { user, workspace, logout, isFounder } = useContext(AuthContext);
@@ -31,28 +31,28 @@ const Layout = ({ children }) => {
             to="/dashboard" 
             className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}
           >
-            <FiHome /> Dashboard
+            <span className="icon">🏠</span> Dashboard
           </Link>
           
           <Link 
             to="/contacts" 
             className={`nav-item ${isActive('/contacts') ? 'active' : ''}`}
           >
-            <FiUsers /> Contacts
+            <span className="icon">👥</span> Contacts
           </Link>
           
           <Link 
             to="/tasks" 
             className={`nav-item ${isActive('/tasks') ? 'active' : ''}`}
           >
-            <FiCheckSquare /> Tasks
+            <span className="icon">✓</span> Tasks
           </Link>
           
           <Link 
             to="/pipeline" 
             className={`nav-item ${isActive('/pipeline') ? 'active' : ''}`}
           >
-            <FiTrello /> Pipeline
+            <span className="icon">📊</span> Pipeline
           </Link>
 
           {isFounder && (
@@ -60,7 +60,7 @@ const Layout = ({ children }) => {
               to="/team" 
               className={`nav-item ${isActive('/team') ? 'active' : ''}`}
             >
-              <FiUserPlus /> Team
+              <span className="icon">👥</span> Team
             </Link>
           )}
         </nav>
@@ -76,7 +76,7 @@ const Layout = ({ children }) => {
             </div>
           </div>
           <button onClick={handleLogout} className="logout-btn">
-            <FiLogOut /> Logout
+            <span className="icon">🚪</span> Logout
           </button>
         </div>
       </aside>
