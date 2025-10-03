@@ -24,10 +24,12 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS workspaces (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  workspace_code VARCHAR(10) UNIQUE NOT NULL,
   created_by INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_workspace_code (workspace_code)
 );
 
 -- Add foreign key to users table for workspace
