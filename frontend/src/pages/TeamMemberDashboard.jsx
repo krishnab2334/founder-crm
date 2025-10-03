@@ -94,6 +94,9 @@ const TeamMemberDashboard = () => {
           <div>
             <h1>Welcome back, {user?.name}! 👋</h1>
             <p className="subtitle">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+            <p className="subtitle" style={{ fontSize: '14px', marginTop: '4px' }}>
+              Team Member Dashboard - Focus on your tasks and deals
+            </p>
           </div>
           <div className="header-actions">
             <button onClick={() => setShowQuickAdd(true)} className="btn btn-primary">

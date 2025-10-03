@@ -372,10 +372,104 @@ const acceptInvitation = async (req, res) => {
   }
 };
 
+// Register team member (direct registration to join existing workspace)
+const registerTeamMember = async (req, res) => {
+  const connection = await pool.getConnection();
+  
+  try {
+    const { name, email, password, workspaceCode } = req.body;
+
+    // Validation
+    if (!name || !email || !password || !workspaceCode) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide all required fields' 
+      });
+    }
+
+    // Check if user already exists
+    const [existingUsers] = await connection.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User already exists with this email' 
+      });
+    }
+
+    // Find workspace by ID (workspaceCode is the workspace ID)
+    const [workspaces] = await connection.query(
+      'SELECT id, name FROM workspaces WHERE id = ?',
+      [workspaceCode]
+    );
+
+    if (workspaces.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid workspace code' 
+      });
+    }
+
+    const workspace = workspaces[0];
+
+    await connection.beginTransaction();
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user as team_member
+    const [userResult] = await connection.query(
+      'INSERT INTO users (name, email, password, role, workspace_id) VALUES (?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'team_member', workspace.id]
+    );
+
+    const userId = userResult.insertId;
+
+    await connection.commit();
+
+    // Generate token
+    const token = generateToken(userId);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      data: {
+        user: {
+          id: userId,
+          name,
+          email,
+          role: 'team_member',
+          workspace_id: workspace.id
+        },
+        workspace: {
+          id: workspace.id,
+          name: workspace.name
+        },
+        token
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Register team member error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed', 
+      error: error.message 
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
   inviteTeamMember,
-  acceptInvitation
+  acceptInvitation,
+  registerTeamMember
 };

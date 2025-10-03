@@ -58,6 +58,7 @@ export const aiAPI = {
 export const authAPI = {
   login: (data) => axios.post(`${API_BASE_URL}/auth/login`, data),
   register: (data) => axios.post(`${API_BASE_URL}/auth/register`, data),
+  registerTeamMember: (data) => axios.post(`${API_BASE_URL}/auth/register-team-member`, data),
   getMe: () => axios.get(`${API_BASE_URL}/auth/me`),
   inviteTeamMember: (data) => axios.post(`${API_BASE_URL}/auth/invite`, data),
   acceptInvitation: (data) => axios.post(`${API_BASE_URL}/auth/accept-invitation`, data)

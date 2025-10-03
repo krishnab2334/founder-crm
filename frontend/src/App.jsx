@@ -10,6 +10,7 @@ import PrivateRoute from './components/PrivateRoute';
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
+import TeamMemberRegister from './pages/TeamMemberRegister';
 import AcceptInvitation from './pages/AcceptInvitation';
 import FounderDashboard from './pages/FounderDashboard';
 import TeamMemberDashboard from './pages/TeamMemberDashboard';
@@ -39,6 +40,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register-team-member" element={<TeamMemberRegister />} />
             <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
 
             {/* Private Routes */}
