@@ -54,11 +54,16 @@ const TeamMemberDashboard = () => {
       const task = [...dashboardData.todayTasks, ...dashboardData.upcomingTasks]
         .find(t => t.id === taskId);
       
+      // Show AI enhancement notification
+      toast.info('🤖 AI is creating a beautiful status update for your founder...', {
+        autoClose: 3000
+      });
+      
       await tasksAPI.update(taskId, {
         ...task,
         status: 'completed'
       });
-      toast.success('Task completed!');
+      toast.success('✅ Task completed! Your founder will see an AI-enhanced update.');
       loadDashboard();
     } catch (error) {
       toast.error('Failed to update task');
