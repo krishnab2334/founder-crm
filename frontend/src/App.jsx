@@ -1,11 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import DashboardRouter from './routes/DashboardRouter';
 
 // Pages
 import Login from './pages/Login';
@@ -22,83 +24,74 @@ import TeamManagement from './pages/TeamManagement';
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <AuthProvider>
         <WebSocketProvider>
-          <ToastContainer 
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/register-team-member" element={<TeamMemberRegister />} />
-            <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
+          <ErrorBoundary>
+            <ToastContainer 
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/register-team-member" element={<TeamMemberRegister />} />
+              <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
 
-            {/* Private Routes */}
-            <Route path="/dashboard" element={
-              <PrivateRoute>
-                <DashboardRouter />
-              </PrivateRoute>
-            } />
-            
-            <Route path="/contacts" element={
-              <PrivateRoute>
-                <Contacts />
-              </PrivateRoute>
-            } />
+              {/* Private Routes */}
+              <Route path="/dashboard" element={
+                <PrivateRoute>
+                  <DashboardRouter />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/contacts" element={
+                <PrivateRoute>
+                  <Contacts />
+                </PrivateRoute>
+              } />
 
-            <Route path="/contacts/:id" element={
-              <PrivateRoute>
-                <ContactDetail />
-              </PrivateRoute>
-            } />
+              <Route path="/contacts/:id" element={
+                <PrivateRoute>
+                  <ContactDetail />
+                </PrivateRoute>
+              } />
 
-            <Route path="/tasks" element={
-              <PrivateRoute>
-                <Tasks />
-              </PrivateRoute>
-            } />
+              <Route path="/tasks" element={
+                <PrivateRoute>
+                  <Tasks />
+                </PrivateRoute>
+              } />
 
-            <Route path="/pipeline" element={
-              <PrivateRoute>
-                <Pipeline />
-              </PrivateRoute>
-            } />
+              <Route path="/pipeline" element={
+                <PrivateRoute>
+                  <Pipeline />
+                </PrivateRoute>
+              } />
 
-            <Route path="/team" element={
-              <PrivateRoute>
-                <TeamManagement />
-              </PrivateRoute>
-            } />
+              <Route path="/team" element={
+                <PrivateRoute>
+                  <TeamManagement />
+                </PrivateRoute>
+              } />
 
-            {/* Default Route */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              {/* Default Route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </ErrorBoundary>
         </WebSocketProvider>
       </AuthProvider>
-    </Router>
+    </BrowserRouter>
   );
-}
-
-// Dashboard Router based on role
-function DashboardRouter() {
-  const { user } = React.useContext(require('./contexts/AuthContext').AuthContext);
-  
-  if (user?.role === 'founder') {
-    return <FounderDashboard />;
-  } else {
-    return <TeamMemberDashboard />;
-  }
 }
 
 export default App;
