@@ -9,7 +9,8 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    workspaceName: ''
+    workspaceName: '',
+    role: 'founder'
   });
   const [loading, setLoading] = useState(false);
   const { register } = useContext(AuthContext);
@@ -33,7 +34,12 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register(formData.name, formData.email, formData.password, formData.workspaceName);
+      if (formData.role === 'founder') {
+        await register(formData.name, formData.email, formData.password, formData.workspaceName);
+      } else {
+        // For team members, create account without workspace
+        await register(formData.name, formData.email, formData.password, formData.email.split('@')[0] + "'s Workspace");
+      }
       toast.success('Registration successful!');
       navigate('/dashboard');
     } catch (error) {
@@ -48,7 +54,7 @@ const Register = () => {
       <div className="auth-container">
         <div className="auth-header">
           <h1>⚡ Founder CRM</h1>
-          <p>Create your workspace</p>
+          <p>Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -77,16 +83,31 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label>Workspace Name</label>
-            <input
-              type="text"
-              name="workspaceName"
-              value={formData.workspaceName}
+            <label>Role</label>
+            <select
+              name="role"
+              value={formData.role}
               onChange={handleChange}
               required
-              placeholder="My Startup"
-            />
+            >
+              <option value="founder">Founder</option>
+              <option value="team_member">Team Member</option>
+            </select>
           </div>
+
+          {formData.role === 'founder' && (
+            <div className="form-group">
+              <label>Workspace Name</label>
+              <input
+                type="text"
+                name="workspaceName"
+                value={formData.workspaceName}
+                onChange={handleChange}
+                required={formData.role === 'founder'}
+                placeholder="My Startup"
+              />
+            </div>
+          )}
 
           <div className="form-group">
             <label>Password</label>
@@ -113,13 +134,16 @@ const Register = () => {
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Creating workspace...' : 'Create Workspace'}
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
             Already have an account? <Link to="/login">Login</Link>
+          </p>
+          <p style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+            Team members can also join via invitation link
           </p>
         </div>
       </div>

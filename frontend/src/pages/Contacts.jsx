@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { contactsAPI, aiAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiSearch, FiUser, FiMail, FiPhone, FiBuilding } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiUser, FiMail, FiPhone, FiBriefcase } from 'react-icons/fi';
 
 const Contacts = () => {
   const [contacts, setContacts] = useState([]);
@@ -207,7 +207,7 @@ const Contacts = () => {
                     )}
                     {contact.company && (
                       <div className="info-item">
-                        <FiBuilding /> {contact.company}
+                        <FiBriefcase /> {contact.company}
                       </div>
                     )}
                   </div>

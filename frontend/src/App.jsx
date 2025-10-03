@@ -11,8 +11,7 @@ import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AcceptInvitation from './pages/AcceptInvitation';
-import FounderDashboard from './pages/FounderDashboard';
-import TeamMemberDashboard from './pages/TeamMemberDashboard';
+import Dashboard from './pages/Dashboard';
 import Contacts from './pages/Contacts';
 import ContactDetail from './pages/ContactDetail';
 import Tasks from './pages/Tasks';
@@ -44,7 +43,7 @@ function App() {
             {/* Private Routes */}
             <Route path="/dashboard" element={
               <PrivateRoute>
-                <DashboardRouter />
+                <Dashboard />
               </PrivateRoute>
             } />
             
@@ -86,17 +85,6 @@ function App() {
       </AuthProvider>
     </Router>
   );
-}
-
-// Dashboard Router based on role
-function DashboardRouter() {
-  const { user } = React.useContext(require('./contexts/AuthContext').AuthContext);
-  
-  if (user?.role === 'founder') {
-    return <FounderDashboard />;
-  } else {
-    return <TeamMemberDashboard />;
-  }
 }
 
 export default App;
