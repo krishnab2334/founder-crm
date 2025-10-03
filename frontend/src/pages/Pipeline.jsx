@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Layout from '../components/Layout';
 import { dealsAPI, contactsAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { FiPlus, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiDollarSign, FiMove } from 'react-icons/fi';
 import { format } from 'date-fns';
 
 const Pipeline = () => {
@@ -91,6 +92,50 @@ const Pipeline = () => {
     }
   };
 
+  const onDragEnd = async (result) => {
+    const { source, destination, draggableId } = result;
+
+    // Dropped outside a droppable area
+    if (!destination) return;
+
+    // Dropped in the same position
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const sourceStage = source.droppableId;
+    const destStage = destination.droppableId;
+
+    // Optimistically update UI
+    const newPipeline = { ...pipeline };
+    const dealId = parseInt(draggableId);
+    
+    // Find the deal
+    const dealToMove = newPipeline[sourceStage].find(d => d.id === dealId);
+    if (!dealToMove) return;
+
+    // Remove from source
+    newPipeline[sourceStage] = newPipeline[sourceStage].filter(d => d.id !== dealId);
+    
+    // Add to destination
+    newPipeline[destStage] = [...newPipeline[destStage]];
+    newPipeline[destStage].splice(destination.index, 0, dealToMove);
+
+    setPipeline(newPipeline);
+
+    // Update backend if stage changed
+    if (sourceStage !== destStage) {
+      try {
+        await dealsAPI.updateStage(dealId, destStage);
+        toast.success(`Deal moved to ${destStage.replace('_', ' ')}!`);
+      } catch (error) {
+        toast.error('Failed to update deal');
+        // Revert on error
+        loadPipeline();
+      }
+    }
+  };
+
   const calculateStageValue = (stage) => {
     return stage.reduce((sum, deal) => sum + parseFloat(deal.value || 0), 0);
   };
@@ -127,23 +172,38 @@ const Pipeline = () => {
             <p>Loading pipeline...</p>
           </div>
         ) : (
-          <div className="pipeline-board">
-            {stageConfig.map(stage => (
-              <div key={stage.key} className="pipeline-column">
-                <div className={`column-header ${stage.color}`}>
-                  <h3>{stage.label}</h3>
-                  <div className="column-stats">
-                    <span className="badge">{pipeline[stage.key]?.length || 0}</span>
-                    <span className="value">
-                      ${calculateStageValue(pipeline[stage.key] || []).toLocaleString()}
-                    </span>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="pipeline-board">
+              {stageConfig.map(stage => (
+                <div key={stage.key} className="pipeline-column">
+                  <div className={`column-header ${stage.color}`}>
+                    <h3>{stage.label}</h3>
+                    <div className="column-stats">
+                      <span className="badge">{pipeline[stage.key]?.length || 0}</span>
+                      <span className="value">
+                        ${calculateStageValue(pipeline[stage.key] || []).toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="deal-list">
-                  {pipeline[stage.key] && pipeline[stage.key].length > 0 ? (
-                    pipeline[stage.key].map(deal => (
-                      <div key={deal.id} className="deal-card">
+                  <Droppable droppableId={stage.key}>
+                    {(provided, snapshot) => (
+                      <div 
+                        className={`deal-list ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                      >
+                        {pipeline[stage.key] && pipeline[stage.key].length > 0 ? (
+                          pipeline[stage.key].map((deal, index) => (
+                            <Draggable key={deal.id} draggableId={deal.id.toString()} index={index}>
+                              {(provided, snapshot) => (
+                                <div 
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`deal-card ${snapshot.isDragging ? 'dragging' : ''}`}
+                                  style={provided.draggableProps.style}
+                                >
                         <h4>{deal.title}</h4>
                         <p className="deal-contact">
                           {deal.contact_name} {deal.contact_company && `• ${deal.contact_company}`}
@@ -177,44 +237,24 @@ const Pipeline = () => {
                           </p>
                         )}
 
-                        {/* Stage Navigation */}
-                        <div className="deal-actions">
-                          {stage.key !== 'lead' && stage.key !== 'closed_lost' && (
-                            <button
-                              onClick={() => {
-                                const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
-                                if (currentIndex > 0) {
-                                  handleStageChange(deal.id, stageConfig[currentIndex - 1].key);
-                                }
-                              }}
-                              className="btn btn-sm"
-                            >
-                              ←
-                            </button>
-                          )}
-                          {stage.key !== 'closed_won' && stage.key !== 'closed_lost' && (
-                            <button
-                              onClick={() => {
-                                const currentIndex = stageConfig.findIndex(s => s.key === stage.key);
-                                if (currentIndex < stageConfig.length - 2) {
-                                  handleStageChange(deal.id, stageConfig[currentIndex + 1].key);
-                                }
-                              }}
-                              className="btn btn-sm"
-                            >
-                              →
-                            </button>
-                          )}
-                        </div>
+                                  <div className="drag-indicator">
+                                    <FiMove />
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          <p className="empty-state">Drop deals here</p>
+                        )}
+                        {provided.placeholder}
                       </div>
-                    ))
-                  ) : (
-                    <p className="empty-state">No deals</p>
-                  )}
+                    )}
+                  </Droppable>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </DragDropContext>
         )}
 
         {/* Add Deal Modal */}

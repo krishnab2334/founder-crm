@@ -311,15 +311,15 @@ const inviteTeamMember = async (req, res) => {
   }
 };
 
-// Register team member with workspace code
+// Register team member with invitation token
 const registerTeamMember = async (req, res) => {
   const connection = await pool.getConnection();
   
   try {
-    const { name, email, password, workspaceCode } = req.body;
+    const { name, email, password, token } = req.body;
 
     // Validation
-    if (!name || !email || !password || !workspaceCode) {
+    if (!name || !email || !password || !token) {
       return res.status(400).json({ 
         success: false, 
         message: 'Please provide all required fields' 
@@ -339,20 +339,39 @@ const registerTeamMember = async (req, res) => {
       });
     }
 
-    // Find workspace by code
-    const [workspaces] = await connection.query(
-      'SELECT id, name FROM workspaces WHERE workspace_code = ?',
-      [workspaceCode.toUpperCase()]
+    // Find and validate invitation token
+    const [invitations] = await connection.query(
+      `SELECT i.*, w.id as workspace_id, w.name as workspace_name
+       FROM invitations i
+       JOIN workspaces w ON i.workspace_id = w.id
+       WHERE i.token = ? AND i.accepted = false`,
+      [token]
     );
 
-    if (workspaces.length === 0) {
+    if (invitations.length === 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Invalid workspace code' 
+        message: 'Invalid or already used invitation link' 
       });
     }
 
-    const workspace = workspaces[0];
+    const invitation = invitations[0];
+
+    // Check if invitation is expired
+    if (new Date(invitation.expires_at) < new Date()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This invitation has expired. Please request a new one.' 
+      });
+    }
+
+    // Optionally verify email matches
+    if (invitation.email && invitation.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This invitation was sent to a different email address' 
+      });
+    }
 
     await connection.beginTransaction();
 
@@ -363,32 +382,38 @@ const registerTeamMember = async (req, res) => {
     // Create user
     const [userResult] = await connection.query(
       'INSERT INTO users (name, email, password, role, workspace_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'team_member', workspace.id]
+      [name, email, hashedPassword, invitation.role || 'team_member', invitation.workspace_id]
     );
 
     const userId = userResult.insertId;
 
+    // Mark invitation as accepted
+    await connection.query(
+      'UPDATE invitations SET accepted = true WHERE id = ?',
+      [invitation.id]
+    );
+
     await connection.commit();
 
-    // Generate token
-    const token = generateToken(userId);
+    // Generate JWT token
+    const authToken = generateToken(userId);
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: 'Registration successful! Welcome to the team!',
       data: {
         user: {
           id: userId,
           name,
           email,
-          role: 'team_member',
-          workspace_id: workspace.id
+          role: invitation.role || 'team_member',
+          workspace_id: invitation.workspace_id
         },
         workspace: {
-          id: workspace.id,
-          name: workspace.name
+          id: invitation.workspace_id,
+          name: invitation.workspace_name
         },
-        token
+        token: authToken
       }
     });
   } catch (error) {
