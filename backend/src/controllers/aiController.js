@@ -221,6 +221,101 @@ const markSuggestionApplied = async (req, res) => {
   }
 };
 
+// Beautify task status message
+const beautifyTaskStatusMessage = async (req, res) => {
+  try {
+    const { taskId, statusMessage } = req.body;
+    const workspaceId = req.user.workspace_id;
+
+    if (!taskId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Task ID is required' 
+      });
+    }
+
+    // Get task details
+    const [tasks] = await pool.query(
+      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.id
+       LEFT JOIN contacts c ON t.contact_id = c.id
+       WHERE t.id = ? AND t.workspace_id = ?`,
+      [taskId, workspaceId]
+    );
+
+    if (tasks.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Task not found' 
+      });
+    }
+
+    const task = tasks[0];
+    const taskData = {
+      title: task.title,
+      category: task.category,
+      priority: task.priority,
+      status: task.status,
+      oldStatus: task.status,
+      assignedToName: req.user.name,
+      contactName: task.contact_name
+    };
+
+    const result = await aiService.beautifyTaskStatus(taskData, task.status, statusMessage || '');
+
+    res.json({
+      success: true,
+      message: 'Status message beautified successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Beautify task status message error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to beautify status message', 
+      error: error.message 
+    });
+  }
+};
+
+// Generate status update suggestions
+const generateTaskStatusSuggestions = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const workspaceId = req.user.workspace_id;
+
+    // Get task details
+    const [tasks] = await pool.query(
+      `SELECT * FROM tasks WHERE id = ? AND workspace_id = ?`,
+      [taskId, workspaceId]
+    );
+
+    if (tasks.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Task not found' 
+      });
+    }
+
+    const task = tasks[0];
+    const suggestions = await aiService.generateStatusSuggestions(task);
+
+    res.json({
+      success: true,
+      message: 'Suggestions generated successfully',
+      data: { suggestions }
+    });
+  } catch (error) {
+    console.error('Generate status suggestions error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate suggestions', 
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   analyzeContactNote,
   prioritizeTasks,
@@ -229,5 +324,7 @@ module.exports = {
   summarizeNotes,
   predictDealConversion,
   getAISuggestions,
-  markSuggestionApplied
+  markSuggestionApplied,
+  beautifyTaskStatusMessage,
+  generateTaskStatusSuggestions
 };

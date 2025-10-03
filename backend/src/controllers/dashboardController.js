@@ -9,7 +9,8 @@ const getFounderDashboard = async (req, res) => {
 
     // Get today's tasks
     const [todayTasks] = await pool.query(
-      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
+      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name,
+              t.beautified_status_message, t.last_status_update
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN contacts c ON t.contact_id = c.id
@@ -23,7 +24,8 @@ const getFounderDashboard = async (req, res) => {
     nextWeek.setDate(nextWeek.getDate() + 7);
 
     const [upcomingTasks] = await pool.query(
-      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
+      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name,
+              t.beautified_status_message, t.last_status_update
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN contacts c ON t.contact_id = c.id
@@ -34,7 +36,8 @@ const getFounderDashboard = async (req, res) => {
 
     // Get overdue tasks
     const [overdueTasks] = await pool.query(
-      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
+      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name,
+              t.beautified_status_message, t.last_status_update
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN contacts c ON t.contact_id = c.id

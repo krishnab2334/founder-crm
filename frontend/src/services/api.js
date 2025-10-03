@@ -51,7 +51,9 @@ export const aiAPI = {
   summarizeNotes: (data) => axios.post(`${API_BASE_URL}/ai/summarize-notes`, data),
   predictDeal: (dealId) => axios.get(`${API_BASE_URL}/ai/predict-deal/${dealId}`),
   getSuggestions: (params) => axios.get(`${API_BASE_URL}/ai/suggestions`, { params }),
-  markApplied: (id) => axios.patch(`${API_BASE_URL}/ai/suggestions/${id}/applied`)
+  markApplied: (id) => axios.patch(`${API_BASE_URL}/ai/suggestions/${id}/applied`),
+  beautifyTaskStatus: (data) => axios.post(`${API_BASE_URL}/ai/beautify-task-status`, data),
+  getTaskStatusSuggestions: (taskId) => axios.get(`${API_BASE_URL}/ai/task-status-suggestions/${taskId}`)
 };
 
 // Auth API

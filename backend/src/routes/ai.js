@@ -9,7 +9,9 @@ const {
   summarizeNotes,
   predictDealConversion,
   getAISuggestions,
-  markSuggestionApplied
+  markSuggestionApplied,
+  beautifyTaskStatusMessage,
+  generateTaskStatusSuggestions
 } = require('../controllers/aiController');
 
 // All routes require authentication
@@ -23,5 +25,7 @@ router.post('/summarize-notes', summarizeNotes);
 router.get('/predict-deal/:dealId', predictDealConversion);
 router.get('/suggestions', getAISuggestions);
 router.patch('/suggestions/:id/applied', markSuggestionApplied);
+router.post('/beautify-task-status', beautifyTaskStatusMessage);
+router.get('/task-status-suggestions/:taskId', generateTaskStatusSuggestions);
 
 module.exports = router;

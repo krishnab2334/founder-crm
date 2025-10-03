@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Layout from '../components/Layout';
-import { dashboardAPI, tasksAPI } from '../services/api';
+import { dashboardAPI, tasksAPI, aiAPI } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTarget, FiTrendingUp, FiUser } from 'react-icons/fi';
+import { FiPlus, FiClock, FiAlertCircle, FiCheckCircle, FiTarget, FiTrendingUp, FiUser, FiEdit3, FiSend, FiZap } from 'react-icons/fi';
 import { format } from 'date-fns';
 
 const TeamMemberDashboard = () => {
@@ -13,6 +13,12 @@ const TeamMemberDashboard = () => {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
   const [showMyProfile, setShowMyProfile] = useState(false);
+  const [showStatusUpdate, setShowStatusUpdate] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [newStatus, setNewStatus] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -62,6 +68,47 @@ const TeamMemberDashboard = () => {
       loadDashboard();
     } catch (error) {
       toast.error('Failed to update task');
+    }
+  };
+
+  const handleOpenStatusUpdate = (task) => {
+    setSelectedTask(task);
+    setNewStatus(task.status);
+    setStatusMessage('');
+    setAiSuggestions([]);
+    setShowStatusUpdate(true);
+  };
+
+  const handleGetAISuggestions = async () => {
+    if (!selectedTask) return;
+    
+    setLoadingSuggestions(true);
+    try {
+      const response = await aiAPI.getTaskStatusSuggestions(selectedTask.id);
+      setAiSuggestions(response.data.data.suggestions || []);
+      toast.success('AI suggestions generated!');
+    } catch (error) {
+      toast.error('Failed to get AI suggestions');
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleUpdateTaskStatus = async (e) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+
+    try {
+      await tasksAPI.update(selectedTask.id, {
+        ...selectedTask,
+        status: newStatus,
+        status_message: statusMessage
+      });
+      toast.success('Task status updated successfully!');
+      setShowStatusUpdate(false);
+      loadDashboard();
+    } catch (error) {
+      toast.error('Failed to update task status');
     }
   };
 
@@ -203,6 +250,13 @@ const TeamMemberDashboard = () => {
                         {task.contact_name && ` • ${task.contact_name}`}
                       </p>
                     </div>
+                    <button 
+                      onClick={() => handleOpenStatusUpdate(task)} 
+                      className="btn-icon"
+                      title="Update Status"
+                    >
+                      <FiEdit3 />
+                    </button>
                     <span className={`status-badge ${task.status}`}>{task.status}</span>
                   </div>
                 ))
@@ -441,6 +495,97 @@ const TeamMemberDashboard = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Update Modal */}
+        {showStatusUpdate && selectedTask && (
+          <div className="modal-overlay" onClick={() => setShowStatusUpdate(false)}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Update Task Status</h2>
+                <button onClick={() => setShowStatusUpdate(false)} className="close-btn">×</button>
+              </div>
+              
+              <form onSubmit={handleUpdateTaskStatus}>
+                <div className="status-update-form">
+                  <div className="task-info-banner">
+                    <h3>{selectedTask.title}</h3>
+                    <p>{selectedTask.category} • {selectedTask.priority} priority</p>
+                  </div>
+
+                  <div className="form-group">
+                    <label>New Status</label>
+                    <select 
+                      value={newStatus} 
+                      onChange={(e) => setNewStatus(e.target.value)}
+                      className="form-control"
+                    >
+                      <option value="todo">To Do</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <div className="label-with-action">
+                      <label>Status Update Message</label>
+                      <button 
+                        type="button"
+                        onClick={handleGetAISuggestions}
+                        disabled={loadingSuggestions}
+                        className="btn btn-sm btn-secondary"
+                      >
+                        <FiZap /> {loadingSuggestions ? 'Loading...' : 'Get AI Suggestions'}
+                      </button>
+                    </div>
+                    <textarea
+                      value={statusMessage}
+                      onChange={(e) => setStatusMessage(e.target.value)}
+                      placeholder="Describe what you've done, any blockers, or next steps..."
+                      rows="4"
+                      className="form-control"
+                    />
+                    <p className="help-text">
+                      💡 This message will be enhanced by AI and shown to the founder
+                    </p>
+                  </div>
+
+                  {aiSuggestions.length > 0 && (
+                    <div className="ai-suggestions-box">
+                      <h4><FiZap /> AI Suggestions</h4>
+                      <p className="suggestions-hint">Click a suggestion to use it:</p>
+                      <div className="suggestions-list">
+                        {aiSuggestions.map((suggestion, idx) => (
+                          <div 
+                            key={idx} 
+                            className="suggestion-item"
+                            onClick={() => setStatusMessage(suggestion)}
+                          >
+                            <FiSend className="suggestion-icon" />
+                            <span>{suggestion}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="modal-actions">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowStatusUpdate(false)} 
+                      className="btn btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      <FiCheckCircle /> Update Status
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
         )}

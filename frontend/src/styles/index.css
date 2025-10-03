@@ -10,6 +10,7 @@
   --danger: #ef4444;
   --warning: #f59e0b;
   --info: #3b82f6;
+  --ai-purple: #a855f7;
   
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
@@ -1275,4 +1276,184 @@ body {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================
+   AI Status Update Styles
+   ============================================ */
+
+.status-update-message {
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-left: 3px solid var(--info);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.status-update-message .message-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.status-update-message .beautified-message {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.status-update-message .message-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.modal-large {
+  max-width: 600px;
+  width: 90%;
+}
+
+.status-update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.task-info-banner {
+  background: var(--bg-tertiary);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary);
+}
+
+.task-info-banner h3 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.task-info-banner p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.label-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.label-with-action label {
+  margin-bottom: 0;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.help-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-suggestions-box {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border: 2px solid var(--ai-purple);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.ai-suggestions-box h4 {
+  font-size: 16px;
+  color: var(--ai-purple);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suggestions-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-item {
+  background: white;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suggestion-item:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--ai-purple);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+.suggestion-item .suggestion-icon {
+  color: var(--ai-purple);
+  flex-shrink: 0;
+}
+
+.suggestion-item span {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary);
+}
+
+.task-item {
+  position: relative;
+}
+
+.task-item .btn-icon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.task-item:hover .btn-icon {
+  opacity: 1;
 }

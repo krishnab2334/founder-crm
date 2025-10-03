@@ -199,12 +199,17 @@ const createTask = async (req, res) => {
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, assigned_to, contact_id, category, priority, status, due_date } = req.body;
+    const { title, description, assigned_to, contact_id, category, priority, status, due_date, status_message } = req.body;
     const workspaceId = req.user.workspace_id;
+    const aiService = require('../services/aiService');
 
-    // Check if task exists
+    // Check if task exists and get old data
     const [tasks] = await pool.query(
-      'SELECT id FROM tasks WHERE id = ? AND workspace_id = ?',
+      `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.id
+       LEFT JOIN contacts c ON t.contact_id = c.id
+       WHERE t.id = ? AND t.workspace_id = ?`,
       [id, workspaceId]
     );
 
@@ -215,22 +220,55 @@ const updateTask = async (req, res) => {
       });
     }
 
+    const oldTask = tasks[0];
+    const oldStatus = oldTask.status;
+
     // Update task
     const completed_at = status === 'completed' ? new Date() : null;
+    let beautified_status_message = null;
+    
+    // If status changed and we have AI available, beautify the message
+    if (status !== oldStatus) {
+      try {
+        const taskData = {
+          title,
+          category,
+          priority,
+          status,
+          oldStatus,
+          assignedToName: req.user.name,
+          contactName: oldTask.contact_name
+        };
+        
+        const beautifyResult = await aiService.beautifyTaskStatus(taskData, status, status_message || '');
+        beautified_status_message = beautifyResult.beautifiedMessage;
+      } catch (aiError) {
+        console.error('AI beautification error:', aiError);
+        // Fallback to user message or default
+        beautified_status_message = status_message || `Task status updated to ${status}`;
+      }
+    } else if (status_message) {
+      // If no status change but message provided, use it directly
+      beautified_status_message = status_message;
+    }
+
+    const last_status_update = status !== oldStatus ? new Date() : oldTask.last_status_update;
     
     await pool.query(
       `UPDATE tasks 
        SET title = ?, description = ?, assigned_to = ?, contact_id = ?, 
-           category = ?, priority = ?, status = ?, due_date = ?, completed_at = ?
+           category = ?, priority = ?, status = ?, due_date = ?, completed_at = ?,
+           beautified_status_message = ?, last_status_update = ?
        WHERE id = ?`,
-      [title, description, assigned_to, contact_id, category, priority, status, due_date, completed_at, id]
+      [title, description, assigned_to, contact_id, category, priority, status, due_date, completed_at,
+       beautified_status_message, last_status_update, id]
     );
 
     // Log activity
     await pool.query(
       `INSERT INTO activity_logs (workspace_id, user_id, action_type, entity_type, entity_id, description)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [workspaceId, req.user.id, 'updated', 'task', id, `Updated task: ${title}`]
+      [workspaceId, req.user.id, 'updated', 'task', id, beautified_status_message || `Updated task: ${title}`]
     );
 
     res.json({
@@ -245,7 +283,8 @@ const updateTask = async (req, res) => {
         category,
         priority,
         status,
-        due_date
+        due_date,
+        beautified_status_message
       }
     });
   } catch (error) {

@@ -383,6 +383,134 @@ Return in JSON format:
       throw error;
     }
   }
+
+  // Beautify task status update message
+  async beautifyTaskStatus(taskData, statusUpdate, userMessage = '') {
+    try {
+      const { title, category, priority, status, oldStatus, assignedToName, contactName } = taskData;
+
+      const prompt = `
+You are an AI assistant helping a startup team communicate task updates clearly to the founder.
+A team member has updated a task status. Create a clear, professional, and concise status message that the founder will understand.
+
+Task Details:
+- Title: ${title}
+- Category: ${category}
+- Priority: ${priority}
+- Previous Status: ${oldStatus || 'N/A'}
+- New Status: ${status}
+- Assigned To: ${assignedToName || 'Unassigned'}
+${contactName ? `- Related Contact: ${contactName}` : ''}
+
+Team Member's Note: "${userMessage || 'No additional notes'}"
+
+Create a beautified status message that:
+1. Clearly states what changed
+2. Provides context about the task
+3. Is professional but friendly
+4. Is easy to understand for a busy founder
+5. Includes any important details from the team member's note
+6. Keep it to 2-3 sentences maximum
+
+Return in JSON format:
+{
+  "beautifiedMessage": "The clear, professional status message",
+  "summary": "One-line summary of the update",
+  "suggestedActions": ["action1", "action2"] // Optional follow-up actions for founder
+}
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 300
+      });
+
+      const responseText = completion.choices[0].message.content;
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        // Fallback to a simple message
+        result = {
+          beautifiedMessage: `${assignedToName || 'Team member'} updated "${title}" from ${oldStatus || 'unknown'} to ${status}. ${userMessage}`,
+          summary: `Task ${status}`,
+          suggestedActions: []
+        };
+      }
+
+      return result;
+    } catch (error) {
+      console.error('AI beautify task status error:', error);
+      // Return a simple fallback message
+      return {
+        beautifiedMessage: `Task "${taskData.title}" has been updated to ${taskData.status}. ${userMessage}`,
+        summary: `Task ${taskData.status}`,
+        suggestedActions: []
+      };
+    }
+  }
+
+  // Generate status update suggestions for team members
+  async generateStatusSuggestions(taskData) {
+    try {
+      const { title, category, status, description } = taskData;
+
+      const prompt = `
+You are helping a team member write a clear status update for their task.
+Suggest 3-4 example status messages they could use.
+
+Task: ${title}
+Category: ${category}
+Current Status: ${status}
+Description: ${description || 'N/A'}
+
+Generate 3-4 professional, clear status update messages that explain progress, blockers, or completion.
+Each should be 1-2 sentences.
+
+Return as JSON array of strings:
+{
+  "suggestions": ["suggestion1", "suggestion2", "suggestion3"]
+}
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.8,
+        max_tokens: 250
+      });
+
+      const responseText = completion.choices[0].message.content;
+      
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        // Fallback suggestions
+        result = {
+          suggestions: [
+            `Making good progress on ${title}`,
+            `Completed ${title} successfully`,
+            `Need assistance with ${title}`,
+            `${title} is on track for completion`
+          ]
+        };
+      }
+
+      return result.suggestions || [];
+    } catch (error) {
+      console.error('AI generate status suggestions error:', error);
+      return [
+        'Making good progress on this task',
+        'Task completed successfully',
+        'Encountered some blockers',
+        'On track for completion'
+      ];
+    }
+  }
 }
 
 module.exports = new AIService();
