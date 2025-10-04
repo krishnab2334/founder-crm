@@ -80,8 +80,17 @@ const Tasks = () => {
   const handleStatusUpdate = async (taskId, newStatus) => {
     try {
       const task = tasks.find(t => t.id === taskId);
+      const oldStatus = task.status;
+      
+      // Show AI enhancement notification if status is actually changing
+      if (oldStatus !== newStatus) {
+        toast.info('🤖 AI is beautifying this status update for better insights...', {
+          autoClose: 2500
+        });
+      }
+      
       await tasksAPI.update(taskId, { ...task, status: newStatus });
-      toast.success('Task updated!');
+      toast.success('✨ Task updated with AI-enhanced messaging!');
       loadTasks();
     } catch (error) {
       toast.error('Failed to update task');

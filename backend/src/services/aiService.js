@@ -1,16 +1,24 @@
 const OpenAI = require('openai');
 const { pool } = require('../config/database');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI client (only if API key is available)
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+} else {
+  console.warn('⚠️  OpenAI API key not found. AI features will use fallback messages.');
+}
 
 // AI Service for generating suggestions
 class AIService {
   // Analyze contact note and generate suggestions
   async analyzeContactNote(contactId, note, userId, workspaceId) {
     try {
+      if (!openai) {
+        throw new Error('OpenAI API not available');
+      }
       // Get contact details
       const [contacts] = await pool.query(
         'SELECT * FROM contacts WHERE id = ? AND workspace_id = ?',
@@ -309,6 +317,124 @@ Provide a clear, bullet-point summary.
       console.error('AI summarize notes error:', error);
       throw error;
     }
+  }
+
+  // Beautify task status update message
+  async beautifyTaskStatusMessage(taskData, updateData, userInfo) {
+    try {
+      const { title, description, category, priority, assigned_to_name } = taskData;
+      const { status: newStatus, oldStatus } = updateData;
+      const { name: userName } = userInfo;
+
+      // If OpenAI is not available, return fallback immediately
+      if (!openai) {
+        return this.generateFallbackMessage(taskData, updateData, userInfo);
+      }
+
+      const prompt = `
+You are an AI assistant that creates professional, engaging status update messages for a founder's dashboard. 
+Transform the basic task status update into a clear, informative message that a founder would appreciate seeing.
+
+Task Information:
+- Title: ${title}
+- Description: ${description || 'No description'}
+- Category: ${category}
+- Priority: ${priority}
+- Assigned to: ${assigned_to_name}
+- Updated by: ${userName}
+- Status changed from: ${oldStatus} → ${newStatus}
+
+Create a professional, concise status update message that:
+1. Clearly communicates what happened
+2. Provides context about the task
+3. Is easy to understand for a founder
+4. Maintains a professional but friendly tone
+5. Highlights important details like priority or blockers
+
+Return in JSON format:
+{
+  "beautifiedMessage": "The main status message",
+  "summary": "Brief one-line summary",
+  "priority": "${priority}",
+  "category": "${category}",
+  "actionType": "status_update",
+  "timestamp": "${new Date().toISOString()}"
+}
+
+Examples of good messages:
+- "✅ John completed the high-priority sales task 'Follow up with ABC Corp' - deal pipeline is moving forward"
+- "🚀 Sarah started working on 'Product feature analysis' - market research phase is now underway"
+- "⏸️ Mike paused 'Fundraising presentation' - waiting for financial data from accounting team"
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 300
+      });
+
+      const responseText = completion.choices[0].message.content;
+      
+      let beautifiedUpdate;
+      try {
+        beautifiedUpdate = JSON.parse(responseText);
+      } catch (e) {
+        // Fallback if JSON parsing fails
+        beautifiedUpdate = {
+          beautifiedMessage: `${userName} updated "${title}" from ${oldStatus} to ${newStatus}`,
+          summary: `Task status updated to ${newStatus}`,
+          priority: priority,
+          category: category,
+          actionType: "status_update",
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      return beautifiedUpdate;
+    } catch (error) {
+      console.error('AI beautify task status error:', error);
+      // Return a fallback message
+      return this.generateFallbackMessage(taskData, updateData, userInfo);
+    }
+  }
+
+  // Generate fallback message when AI is not available
+  generateFallbackMessage(taskData, updateData, userInfo) {
+    const { title, category, priority } = taskData;
+    const { status: newStatus, oldStatus } = updateData;
+    const { name: userName } = userInfo;
+
+    // Create a nice fallback message with emojis based on status
+    const statusEmojis = {
+      'todo': '📝',
+      'in_progress': '🚀',
+      'completed': '✅',
+      'cancelled': '❌'
+    };
+
+    const priorityText = priority === 'urgent' ? 'urgent ' : priority === 'high' ? 'high-priority ' : '';
+    const emoji = statusEmojis[newStatus] || '📋';
+    
+    let beautifiedMessage;
+    if (newStatus === 'completed') {
+      beautifiedMessage = `${emoji} ${userName} completed the ${priorityText}${category} task "${title}"`;
+    } else if (newStatus === 'in_progress') {
+      beautifiedMessage = `${emoji} ${userName} started working on the ${priorityText}${category} task "${title}"`;
+    } else if (newStatus === 'cancelled') {
+      beautifiedMessage = `${emoji} ${userName} cancelled the ${category} task "${title}"`;
+    } else {
+      beautifiedMessage = `${emoji} ${userName} updated "${title}" from ${oldStatus} to ${newStatus}`;
+    }
+
+    return {
+      beautifiedMessage,
+      summary: `Task status updated to ${newStatus}`,
+      priority: priority,
+      category: category,
+      actionType: "status_update",
+      timestamp: new Date().toISOString()
+    };
   }
 
   // Predict deal conversion

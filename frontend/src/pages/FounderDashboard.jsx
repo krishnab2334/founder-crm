@@ -79,7 +79,8 @@ const FounderDashboard = () => {
     pipelineStats = [],
     teamActivity = [],
     contactsSummary = [],
-    taskStats = []
+    taskStats = [],
+    beautifiedMessages = []
   } = dashboardData || {};
 
   // Calculate metrics
@@ -173,6 +174,48 @@ const FounderDashboard = () => {
         </div>
 
         <div className="dashboard-grid">
+          {/* AI-Enhanced Team Updates */}
+          <div className="dashboard-card featured">
+            <div className="card-header">
+              <h2>🤖 Team Status Updates</h2>
+              <span className="badge">{beautifiedMessages.length}</span>
+            </div>
+            <div className="beautified-messages-list">
+              {beautifiedMessages.length > 0 ? (
+                beautifiedMessages.slice(0, 5).map(message => (
+                  <div key={message.id} className="beautified-message-item">
+                    <div className="message-header">
+                      <div className="user-info">
+                        <span className="user-avatar">
+                          {message.user_name?.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="user-name">{message.user_name}</span>
+                      </div>
+                      <div className="message-meta">
+                        <span className={`priority-indicator ${message.priority}`}></span>
+                        <span className="category-badge">{message.category}</span>
+                        <span className="timestamp">
+                          {format(new Date(message.created_at), 'MMM d, h:mm a')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="message-content">
+                      <p className="beautified-text">{message.beautified_message}</p>
+                      <p className="task-reference">Task: "{message.task_title}"</p>
+                    </div>
+                    <div className="status-change">
+                      <span className="status-from">{message.original_status}</span>
+                      <span className="arrow">→</span>
+                      <span className="status-to">{message.new_status}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="empty-state">No recent team updates 📝</p>
+              )}
+            </div>
+          </div>
+
           {/* Today's Tasks */}
           <div className="dashboard-card">
             <div className="card-header">

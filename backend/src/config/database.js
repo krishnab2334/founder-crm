@@ -3,11 +3,11 @@ require('dotenv').config();
 
 // Create connection pool
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'nozomi.proxy.rlwy.net',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'founder_crm',
-  port: process.env.DB_PORT || 3306,
+  password: process.env.DB_PASSWORD || 'JDJiYSjFIxmExMGENoxbUirliMKLQuDA',
+  database: process.env.DB_NAME || 'railway',
+  port: process.env.DB_PORT || 17715,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

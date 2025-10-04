@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const aiService = require('../services/aiService');
 
 // Get all tasks for workspace
 const getTasks = async (req, res) => {
@@ -209,11 +210,16 @@ const updateTask = async (req, res) => {
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN contacts c ON t.contact_id = c.id
+    // Get current task data for comparison
+    const [currentTasks] = await pool.query(
+      `SELECT t.*, u.name as assigned_to_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.id
        WHERE t.id = ? AND t.workspace_id = ?`,
       [id, workspaceId]
     );
 
-    if (tasks.length === 0) {
+    if (currentTasks.length === 0) {
       return res.status(404).json({ 
         success: false, 
         message: 'Task not found' 
@@ -222,6 +228,9 @@ const updateTask = async (req, res) => {
 
     const oldTask = tasks[0];
     const oldStatus = oldTask.status;
+    const currentTask = currentTasks[0];
+    const oldStatus = currentTask.status;
+    const statusChanged = oldStatus !== status;
 
     // Update task
     const completed_at = status === 'completed' ? new Date() : null;
@@ -264,6 +273,54 @@ const updateTask = async (req, res) => {
        beautified_status_message, last_status_update, id]
     );
 
+    // If status changed, generate beautified message using AI
+    if (statusChanged) {
+      try {
+        const taskData = {
+          title: title || currentTask.title,
+          description: description || currentTask.description,
+          category: category || currentTask.category,
+          priority: priority || currentTask.priority,
+          assigned_to_name: currentTask.assigned_to_name
+        };
+
+        const updateData = {
+          status,
+          oldStatus
+        };
+
+        const userInfo = {
+          name: req.user.name
+        };
+
+        // Generate beautified message
+        const beautifiedUpdate = await aiService.beautifyTaskStatusMessage(taskData, updateData, userInfo);
+
+        // Store beautified message
+        await pool.query(
+          `INSERT INTO beautified_status_messages 
+           (workspace_id, user_id, task_id, original_status, new_status, beautified_message, summary, priority, category, action_type, metadata)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            workspaceId, 
+            req.user.id, 
+            id, 
+            oldStatus, 
+            status, 
+            beautifiedUpdate.beautifiedMessage,
+            beautifiedUpdate.summary,
+            beautifiedUpdate.priority,
+            beautifiedUpdate.category,
+            beautifiedUpdate.actionType,
+            JSON.stringify(beautifiedUpdate)
+          ]
+        );
+      } catch (aiError) {
+        console.error('AI beautification error:', aiError);
+        // Continue with regular update even if AI fails
+      }
+    }
+
     // Log activity
     await pool.query(
       `INSERT INTO activity_logs (workspace_id, user_id, action_type, entity_type, entity_id, description)
@@ -285,6 +342,7 @@ const updateTask = async (req, res) => {
         status,
         due_date,
         beautified_status_message
+        statusChanged
       }
     });
   } catch (error) {

@@ -1,0 +1,103 @@
+.pipeline-container {
+  padding: 20px;
+  height: 100%;
+  overflow-x: auto;
+}
+
+.pipeline-title {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.pipeline-stages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  min-height: calc(100vh - 200px);
+}
+
+.pipeline-stage {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-title {
+  font-size: 1.2rem;
+  color: #444;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.stage-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.contact-card {
+  background: white;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.contact-card.dragging {
+  background: #ffffff;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.contact-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.contact-card p {
+  margin: 4px 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.deal-value {
+  color: #2e7d32 !important;
+  font-weight: bold;
+}
+
+.pipeline-stage.dragging-over {
+  background: #e8f5e9;
+}
+
+@media (max-width: 768px) {
+  .pipeline-stages {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-stage {
+    min-height: 300px;
+  }
+
+  .contact-card {
+    padding: 10px;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #666;
+}

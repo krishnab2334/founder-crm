@@ -119,6 +119,18 @@ const getFounderDashboard = async (req, res) => {
       [workspaceId]
     );
 
+    // Get beautified status messages (last 20)
+    const [beautifiedMessages] = await pool.query(
+      `SELECT bsm.*, u.name as user_name, t.title as task_title
+       FROM beautified_status_messages bsm
+       LEFT JOIN users u ON bsm.user_id = u.id
+       LEFT JOIN tasks t ON bsm.task_id = t.id
+       WHERE bsm.workspace_id = ?
+       ORDER BY bsm.created_at DESC
+       LIMIT 20`,
+      [workspaceId]
+    );
+
     res.json({
       success: true,
       data: {
@@ -130,7 +142,8 @@ const getFounderDashboard = async (req, res) => {
         teamActivity,
         contactsSummary,
         taskStats,
-        activityLogs
+        activityLogs,
+        beautifiedMessages
       }
     });
   } catch (error) {
