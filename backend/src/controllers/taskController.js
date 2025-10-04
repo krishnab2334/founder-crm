@@ -24,17 +24,14 @@ const getTasks = async (req, res) => {
       query += ' AND t.status = ?';
       params.push(status);
     }
-
     if (assigned_to) {
       query += ' AND t.assigned_to = ?';
       params.push(assigned_to);
     }
-
     if (category) {
       query += ' AND t.category = ?';
       params.push(category);
     }
-
     if (priority) {
       query += ' AND t.priority = ?';
       params.push(priority);
@@ -146,7 +143,6 @@ const createTask = async (req, res) => {
     const workspaceId = req.user.workspace_id;
     const userId = req.user.id;
 
-    // Validation
     if (!title) {
       return res.status(400).json({ 
         success: false, 
@@ -154,7 +150,6 @@ const createTask = async (req, res) => {
       });
     }
 
-    // Create task
     const [result] = await pool.query(
       `INSERT INTO tasks (workspace_id, title, description, assigned_to, created_by, contact_id, category, priority, status, due_date)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -164,7 +159,6 @@ const createTask = async (req, res) => {
 
     const taskId = result.insertId;
 
-    // Log activity
     await pool.query(
       `INSERT INTO activity_logs (workspace_id, user_id, action_type, entity_type, entity_id, description)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -202,24 +196,18 @@ const updateTask = async (req, res) => {
     const { id } = req.params;
     const { title, description, assigned_to, contact_id, category, priority, status, due_date, status_message } = req.body;
     const workspaceId = req.user.workspace_id;
-    const aiService = require('../services/aiService');
 
-    // Check if task exists and get old data
+    // Check if task exists & get old data
     const [tasks] = await pool.query(
       `SELECT t.*, u.name as assigned_to_name, c.name as contact_name
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN contacts c ON t.contact_id = c.id
-    // Get current task data for comparison
-    const [currentTasks] = await pool.query(
-      `SELECT t.*, u.name as assigned_to_name
-       FROM tasks t
-       LEFT JOIN users u ON t.assigned_to = u.id
        WHERE t.id = ? AND t.workspace_id = ?`,
       [id, workspaceId]
     );
 
-    if (currentTasks.length === 0) {
+    if (tasks.length === 0) {
       return res.status(404).json({ 
         success: false, 
         message: 'Task not found' 
@@ -228,16 +216,12 @@ const updateTask = async (req, res) => {
 
     const oldTask = tasks[0];
     const oldStatus = oldTask.status;
-    const currentTask = currentTasks[0];
-    const oldStatus = currentTask.status;
     const statusChanged = oldStatus !== status;
 
-    // Update task
     const completed_at = status === 'completed' ? new Date() : null;
     let beautified_status_message = null;
-    
-    // If status changed and we have AI available, beautify the message
-    if (status !== oldStatus) {
+
+    if (statusChanged) {
       try {
         const taskData = {
           title,
@@ -248,21 +232,18 @@ const updateTask = async (req, res) => {
           assignedToName: req.user.name,
           contactName: oldTask.contact_name
         };
-        
         const beautifyResult = await aiService.beautifyTaskStatus(taskData, status, status_message || '');
         beautified_status_message = beautifyResult.beautifiedMessage;
       } catch (aiError) {
         console.error('AI beautification error:', aiError);
-        // Fallback to user message or default
         beautified_status_message = status_message || `Task status updated to ${status}`;
       }
     } else if (status_message) {
-      // If no status change but message provided, use it directly
       beautified_status_message = status_message;
     }
 
-    const last_status_update = status !== oldStatus ? new Date() : oldTask.last_status_update;
-    
+    const last_status_update = statusChanged ? new Date() : oldTask.last_status_update;
+
     await pool.query(
       `UPDATE tasks 
        SET title = ?, description = ?, assigned_to = ?, contact_id = ?, 
@@ -273,15 +254,15 @@ const updateTask = async (req, res) => {
        beautified_status_message, last_status_update, id]
     );
 
-    // If status changed, generate beautified message using AI
     if (statusChanged) {
       try {
+        // Generate beautified message for audit/logging purposes
         const taskData = {
-          title: title || currentTask.title,
-          description: description || currentTask.description,
-          category: category || currentTask.category,
-          priority: priority || currentTask.priority,
-          assigned_to_name: currentTask.assigned_to_name
+          title: title || oldTask.title,
+          description: description || oldTask.description,
+          category: category || oldTask.category,
+          priority: priority || oldTask.priority,
+          assigned_to_name: oldTask.assigned_to_name
         };
 
         const updateData = {
@@ -293,20 +274,18 @@ const updateTask = async (req, res) => {
           name: req.user.name
         };
 
-        // Generate beautified message
         const beautifiedUpdate = await aiService.beautifyTaskStatusMessage(taskData, updateData, userInfo);
 
-        // Store beautified message
         await pool.query(
           `INSERT INTO beautified_status_messages 
            (workspace_id, user_id, task_id, original_status, new_status, beautified_message, summary, priority, category, action_type, metadata)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            workspaceId, 
-            req.user.id, 
-            id, 
-            oldStatus, 
-            status, 
+            workspaceId,
+            req.user.id,
+            id,
+            oldStatus,
+            status,
             beautifiedUpdate.beautifiedMessage,
             beautifiedUpdate.summary,
             beautifiedUpdate.priority,
@@ -317,11 +296,9 @@ const updateTask = async (req, res) => {
         );
       } catch (aiError) {
         console.error('AI beautification error:', aiError);
-        // Continue with regular update even if AI fails
       }
     }
 
-    // Log activity
     await pool.query(
       `INSERT INTO activity_logs (workspace_id, user_id, action_type, entity_type, entity_id, description)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -341,7 +318,7 @@ const updateTask = async (req, res) => {
         priority,
         status,
         due_date,
-        beautified_status_message
+        beautified_status_message,
         statusChanged
       }
     });
@@ -361,7 +338,6 @@ const deleteTask = async (req, res) => {
     const { id } = req.params;
     const workspaceId = req.user.workspace_id;
 
-    // Check if task exists
     const [tasks] = await pool.query(
       'SELECT title FROM tasks WHERE id = ? AND workspace_id = ?',
       [id, workspaceId]
@@ -374,8 +350,7 @@ const deleteTask = async (req, res) => {
       });
     }
 
-    // Delete task
-    await pool.query('DELETE FROM tasks WHERE id = ?', [id]);
+    await pool.query('DELETE FROM tasks WHERE id = ? AND workspace_id = ?', [id, workspaceId]);
 
     res.json({
       success: true,
