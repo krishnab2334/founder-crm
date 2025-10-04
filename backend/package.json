@@ -7,15 +7,18 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
-    "create-demo": "node src/scripts/createDemoAccount.js"
+    "create-demo": "node src/scripts/createDemoAccount.js",
     "build": "echo \"No build step for backend\""
-
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "keywords": ["crm", "task-management", "founder"],
+  "keywords": [
+    "crm",
+    "task-management",
+    "founder"
+  ],
   "author": "Team 4",
   "license": "MIT",
   "dependencies": {
