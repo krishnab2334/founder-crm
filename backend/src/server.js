@@ -53,6 +53,17 @@ app.get('/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'Founder CRM API is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'API is healthy',
+    version: '1.0.0',
     timestamp: new Date().toISOString()
   });
 });

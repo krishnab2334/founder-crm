@@ -1,16 +1,18 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { authAPI } from '../services/api';
 import { toast } from 'react-toastify';
 
 const TeamMemberRegister = () => {
+  const [searchParams] = useSearchParams();
+  const invitationToken = searchParams.get('token');
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    workspaceCode: ''
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -30,8 +32,8 @@ const TeamMemberRegister = () => {
       return;
     }
 
-    if (!formData.workspaceCode.trim()) {
-      toast.error('Workspace code is required');
+    if (!invitationToken) {
+      toast.error('Invalid invitation link. Please use the link sent to your email.');
       return;
     }
 
@@ -42,7 +44,7 @@ const TeamMemberRegister = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        workspaceCode: formData.workspaceCode
+        token: invitationToken
       });
 
       localStorage.setItem('token', response.data.data.token);
@@ -60,7 +62,9 @@ const TeamMemberRegister = () => {
       <div className="auth-container">
         <div className="auth-header">
           <h1>⚡ Founder CRM</h1>
-          <p>Join a workspace as team member</p>
+          <p>Join your team's workspace</p>
+          {invitationToken && <p className="success-hint">✓ You have a valid invitation</p>}
+          {!invitationToken && <p className="error-hint">⚠ No invitation token found in URL</p>}
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -86,20 +90,7 @@ const TeamMemberRegister = () => {
               required
               placeholder="your@email.com"
             />
-          </div>
-
-          <div className="form-group">
-            <label>Workspace Code</label>
-            <input
-              type="text"
-              name="workspaceCode"
-              value={formData.workspaceCode}
-              onChange={handleChange}
-              required
-              placeholder="Enter workspace code from your founder"
-              style={{ textTransform: 'uppercase' }}
-            />
-            <small>Ask your founder for the workspace code</small>
+            <small>Use the email address where you received the invitation</small>
           </div>
 
           <div className="form-group">
@@ -111,6 +102,7 @@ const TeamMemberRegister = () => {
               onChange={handleChange}
               required
               placeholder="Create a password"
+              minLength="6"
             />
           </div>
 
@@ -126,7 +118,7 @@ const TeamMemberRegister = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button type="submit" className="btn btn-primary btn-block" disabled={loading || !invitationToken}>
             {loading ? 'Joining workspace...' : 'Join Workspace'}
           </button>
         </form>

@@ -59,12 +59,6 @@ const FounderDashboard = () => {
     }
   };
 
-  const copyWorkspaceCode = () => {
-    if (workspace?.workspace_code) {
-      navigator.clipboard.writeText(workspace.workspace_code);
-      toast.success('Workspace code copied to clipboard!');
-    }
-  };
 
   if (loading) {
     return (
@@ -239,6 +233,17 @@ const FounderDashboard = () => {
                         {task.assigned_to_name} • {task.category}
                         {task.contact_name && ` • ${task.contact_name}`}
                       </p>
+                      {task.beautified_status_message && (
+                        <div className="status-update-message">
+                          <span className="message-icon">💬</span>
+                          <p className="beautified-message">{task.beautified_status_message}</p>
+                          {task.last_status_update && (
+                            <span className="message-time">
+                              {format(new Date(task.last_status_update), 'MMM d, h:mm a')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <span className={`status-badge ${task.status}`}>{task.status}</span>
                   </div>
@@ -266,6 +271,17 @@ const FounderDashboard = () => {
                         Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
                         {task.assigned_to_name && ` • ${task.assigned_to_name}`}
                       </p>
+                      {task.beautified_status_message && (
+                        <div className="status-update-message">
+                          <span className="message-icon">💬</span>
+                          <p className="beautified-message">{task.beautified_status_message}</p>
+                          {task.last_status_update && (
+                            <span className="message-time">
+                              {format(new Date(task.last_status_update), 'MMM d, h:mm a')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -355,6 +371,17 @@ const FounderDashboard = () => {
                       <p className="task-meta">
                         Due: {format(new Date(task.due_date), 'MMM d')} • {task.assigned_to_name}
                       </p>
+                      {task.beautified_status_message && (
+                        <div className="status-update-message">
+                          <span className="message-icon">💬</span>
+                          <p className="beautified-message">{task.beautified_status_message}</p>
+                          {task.last_status_update && (
+                            <span className="message-time">
+                              {format(new Date(task.last_status_update), 'MMM d, h:mm a')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -418,19 +445,12 @@ const FounderDashboard = () => {
                 </div>
 
                 <div className="info-section">
-                  <h3>Team Member Registration</h3>
-                  <p>Share this workspace code with team members so they can join:</p>
-                  <div className="workspace-code-container">
-                    <div className="workspace-code">
-                      {workspace?.workspace_code || 'Loading...'}
-                    </div>
-                    <button onClick={copyWorkspaceCode} className="btn btn-secondary">
-                      <FiCopy /> Copy Code
-                    </button>
+                  <h3>Team Member Invitations</h3>
+                  <p>Invite team members by email to join your workspace.</p>
+                  <div className="help-text">
+                    <p>Go to Team Management to send email invitations with secure links.</p>
+                    <p>Team members will receive a unique invitation link to join your workspace.</p>
                   </div>
-                  <p className="help-text">
-                    Team members can use this code at: <strong>/register-team-member</strong>
-                  </p>
                 </div>
 
                 <div className="info-section">
