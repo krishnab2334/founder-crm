@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to relative path for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL.replace('/api', '');
